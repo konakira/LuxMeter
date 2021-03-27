@@ -14,6 +14,7 @@ board = m5stick-c
 framework = arduino
 lib_deps = 
 	m5stack/M5StickCPlus@^0.0.1
+	claws/BH1750@^1.2.0
 
 ; Custom Serial Monitor speed (baud rate)
 monitor_speed = 115200
