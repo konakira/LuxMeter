@@ -57,6 +57,9 @@ void setup(){
   // initialize the M5StickC object
   M5.begin();
   delay(500);
+  M5.Lcd.setRotation(1); // set it to 1 or 3 for landscape resolution
+  M5.Lcd.fillScreen(BLACK);
+  M5.Lcd.setTextColor(WHITE, BLACK);
 
   // Initialize the I2C bus (BH1750 library doesn't do this automatically)
   Wire.begin(0, 26);
@@ -71,7 +74,8 @@ void setup(){
 
   // On esp8266 you can select SCL and SDA pins using Wire.begin(D4, D3);
 
-  lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE);
+  //lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE);
+  lightMeter.begin();
   //lightMeter.setMTreg(69);  // not needed, only mentioning it
 
   Serial.println(F("BH1750 Test begin"));
@@ -86,14 +90,24 @@ void setup(){
 
 void loop() {
   //we use here the maxWait option due fail save
-  static int prevlux = -1;
-  int lux = (int)lightMeter.readLightLevel(true);
-  //Serial.print(F("Light: "));
-  //Serial.print(lux);
-  //Serial.println(F(" lx"));
+  static float prevlux = -1.0;
+  float lux = lightMeter.readLightLevel();
+  // Serial.print(F("Light: "));
+  // Serial.print(lux);
+  // Serial.println(F(" lx"));
 
-  if (prevlux != lux) {
+  if (prevlux - lux < -1.0 || 1.0 < prevlux - lux) {
 #ifdef M5STACK
+#define FIGUREFONT 7
+#define UNITFONT 4
+    char buf[10];
+    snprintf(buf, 10, "%0.f", lux);
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.drawString(buf, M5.Lcd.width() / 2 - M5.Lcd.textWidth(buf, FIGUREFONT) / 2,
+		      M5.Lcd.height() / 2 - M5.Lcd.fontHeight(FIGUREFONT) / 2, FIGUREFONT);
+    M5.Lcd.drawString("lx", M5.Lcd.width() / 2 + M5.Lcd.textWidth(buf, FIGUREFONT) / 2,
+		      M5.Lcd.height() / 2 + M5.Lcd.fontHeight(FIGUREFONT) / 2 -
+		      M5.lcd.fontHeight(UNITFONT), UNITFONT);
 #else
     display.showNumberDec((int)lux);
 #endif
@@ -107,36 +121,29 @@ void loop() {
     if (lux > 40000.0) {
       // reduce measurement time - needed in direct sun light
       if (lightMeter.setMTreg(32)) {
-        //Serial.println(F("Setting MTReg to low value for high light environment"));
       }
       else {
-        //Serial.println(F("Error setting MTReg to low value for high light environment"));
       }
     }
     else {
         if (lux > 10.0) {
           // typical light environment
           if (lightMeter.setMTreg(69)) {
-            //Serial.println(F("Setting MTReg to default value for normal light environment"));
           }
           else {
-            //Serial.println(F("Error setting MTReg to default value for normal light environment"));
           }
         }
         else {
           if (lux <= 10.0) {
             //very low light environment
             if (lightMeter.setMTreg(138)) {
-              //Serial.println(F("Setting MTReg to high value for low light environment"));
             }
             else {
-              //Serial.println(F("Error setting MTReg to high value for low light environment"));
             }
           }
        }
     }
 
   }
-  //Serial.println(F("--------------------------------------"));
-  delay(5);
+  delay(500);
 }
