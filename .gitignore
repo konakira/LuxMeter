@@ -1,4 +1,6 @@
 # Prerequisites
+platformio.ini
+
 *.d
 
 # Compiled Object files
@@ -30,3 +32,7 @@
 *.exe
 *.out
 *.app
+
+.pio
+.vscode
+src
